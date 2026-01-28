@@ -1,10 +1,10 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import LoginScreen from "@/screens/LoginScreen";
-import HomeScreen from "@/screens/HomeScreen";
+import AppTabs from "@/navigation/AppTabs";
 
 export type RootStackParamList = {
   Login: undefined;
-  Home: undefined;
+  App: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -12,14 +12,9 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 type Props = {
   isLoggedIn: boolean;
   onLoginMock: () => void;
-  onLogoutMock: () => void;
 };
 
-export default function RootNavigator({
-  isLoggedIn,
-  onLoginMock,
-  onLogoutMock,
-}: Props) {
+export default function RootNavigator({ isLoggedIn, onLoginMock }: Props) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!isLoggedIn ? (
@@ -27,9 +22,7 @@ export default function RootNavigator({
           {() => <LoginScreen onLoginMock={onLoginMock} />}
         </Stack.Screen>
       ) : (
-        <Stack.Screen name="Home">
-          {() => <HomeScreen onLogoutMock={onLogoutMock} />}
-        </Stack.Screen>
+        <Stack.Screen name="App" component={AppTabs} />
       )}
     </Stack.Navigator>
   );

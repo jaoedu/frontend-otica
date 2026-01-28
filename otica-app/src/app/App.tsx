@@ -10,7 +10,6 @@ export default function App() {
       <RootNavigator
         isLoggedIn={isLoggedIn}
         onLoginMock={() => setIsLoggedIn(true)}
-        onLogoutMock={() => setIsLoggedIn(false)}
       />
     </NavigationContainer>
   );

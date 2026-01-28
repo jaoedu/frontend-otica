@@ -1,20 +1,28 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text } from "react-native";
+import AppButton from "@/components/AppButton";
+import { theme } from "@/utils/theme";
 
-type Props = { onLogoutMock: () => void };
+type Props = { onLogoutMock?: () => void };
 
 export default function HomeScreen({ onLogoutMock }: Props) {
   return (
-    <View style={{ flex: 1, padding: 16, justifyContent: "center", gap: 12 }}>
-      <Text style={{ fontSize: 22, fontWeight: "700" }}>Home</Text>
+    <View
+      style={{
+        flex: 1,
+        padding: theme.spacing.md,
+        justifyContent: "center",
+        gap: theme.spacing.md,
+      }}
+    >
+      <Text style={{ fontSize: 24, fontWeight: "800", color: theme.colors.text }}>
+        Home
+      </Text>
 
-      <Pressable
-        onPress={onLogoutMock}
-        style={{ padding: 14, borderRadius: 10, backgroundColor: "#D32F2F" }}
-      >
-        <Text style={{ color: "#fff", fontWeight: "600", textAlign: "center" }}>
-          Sair (mock)
-        </Text>
-      </Pressable>
+      <AppButton
+        title="Sair"
+        onPress={onLogoutMock ?? (() => {})}
+        variant="danger"
+/>
     </View>
   );
 }

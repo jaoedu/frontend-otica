@@ -1,20 +1,16 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text } from "react-native";
+import AppButton from "@/components/AppButton";
+import { theme } from "@/utils/theme";
 
 type Props = { onLoginMock: () => void };
 
 export default function LoginScreen({ onLoginMock }: Props) {
   return (
-    <View style={{ flex: 1, padding: 16, justifyContent: "center", gap: 12 }}>
-      <Text style={{ fontSize: 22, fontWeight: "700" }}>Login</Text>
+    <View style={{ flex: 1, padding: theme.spacing.md, justifyContent: "center", gap: theme.spacing.md }}>
+      <Text style={{ fontSize: 24, fontWeight: "800", color: theme.colors.text }}>Entrar</Text>
+      <Text style={{ color: theme.colors.muted }}>Acesse sua conta para comprar.</Text>
 
-      <Pressable
-        onPress={onLoginMock}
-        style={{ padding: 14, borderRadius: 10, backgroundColor: "#015DAA" }}
-      >
-        <Text style={{ color: "#fff", fontWeight: "600", textAlign: "center" }}>
-          Entrar (mock)
-        </Text>
-      </Pressable>
+      <AppButton title="Entrar (mock)" onPress={onLoginMock} />
     </View>
   );
 }
