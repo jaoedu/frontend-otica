@@ -2,10 +2,10 @@ export const theme = {
   colors: {
     bg: "#FFFFFF",
     surface: "#F7F7F8",
-    text: "#111827",
+    text: "#000000",
     muted: "#6B7280",
     border: "#E5E7EB",
-    primary: "#FFC107",
+    primary: "#F4B400",
     primaryPressed: "#E0A800",
     danger: "#D32F2F",
     success: "#16A34A",

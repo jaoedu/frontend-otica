@@ -1,26 +1,22 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import LoginScreen from "@/screens/LoginScreen";
+import AuthStack from "@/navigation/AuthStack";
 import AppTabs from "@/navigation/AppTabs";
+import { useAuthStore } from "@/store/authStore";
 
 export type RootStackParamList = {
-  Login: undefined;
+  Auth: undefined;
   App: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-type Props = {
-  isLoggedIn: boolean;
-  onLoginMock: () => void;
-};
+export default function RootNavigator() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-export default function RootNavigator({ isLoggedIn, onLoginMock }: Props) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!isLoggedIn ? (
-        <Stack.Screen name="Login">
-          {() => <LoginScreen onLoginMock={onLoginMock} />}
-        </Stack.Screen>
+      {!isAuthenticated ? (
+        <Stack.Screen name="Auth" component={AuthStack} />
       ) : (
         <Stack.Screen name="App" component={AppTabs} />
       )}

@@ -1,54 +1,67 @@
-import { Pressable, Text, StyleSheet } from "react-native";
+import { Pressable, Text, ActivityIndicator, View } from "react-native";
 import { theme } from "@/utils/theme";
 
 type Props = {
   title: string;
-  onPress: () => void;
+  onPress?: () => void;
   variant?: "primary" | "outline" | "danger";
+  disabled?: boolean;
+  loading?: boolean;
+  accessibilityHint?: string;
 };
 
-export default function AppButton({ title, onPress, variant = "primary" }: Props) {
+export default function AppButton({
+  title,
+  onPress,
+  variant = "primary",
+  disabled = false,
+  loading = false,
+  accessibilityHint,
+}: Props) {
+  const isDisabled = disabled || loading;
+
+  const background =
+    variant === "primary"
+      ? theme.colors.primary
+      : variant === "danger"
+      ? theme.colors.danger
+      : "transparent";
+
+  const borderColor =
+    variant === "outline" ? theme.colors.primary : "transparent";
+
+  const textColor =
+    variant === "outline" ? theme.colors.primary : "#000";
+
   return (
     <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.base,
-        variant === "primary" && {
-          backgroundColor: pressed ? theme.colors.primaryPressed : theme.colors.primary,
-        },
-        variant === "outline" && {
-          backgroundColor: "transparent",
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-        },
-        variant === "danger" && {
-          backgroundColor: pressed ? "#B91C1C" : theme.colors.danger,
-        },
-      ]}
+      accessible
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
+      accessibilityLabel={title}
+      accessibilityHint={
+        accessibilityHint ?? `Toque duas vezes para ${title.toLowerCase()}`
+      }
+      onPress={isDisabled ? undefined : onPress}
+      hitSlop={12}
+      style={{
+        minHeight: 48, // WCAG: alvo de toque
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: background,
+        borderColor,
+        borderWidth: variant === "outline" ? 1 : 0,
+        borderRadius: theme.radius.md,
+        paddingHorizontal: theme.spacing.md,
+        opacity: isDisabled ? 0.55 : 1,
+      }}
     >
-      <Text
-        style={[
-          styles.text,
-          variant === "outline" ? { color: theme.colors.text } : { color: "#111" },
-          variant === "danger" ? { color: "#fff" } : null,
-        ]}
-      >
-        {title}
-      </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        {loading ? <ActivityIndicator /> : null}
+        <Text style={{ color: textColor, fontWeight: "700" }}>
+          {title}
+        </Text>
+      </View>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  base: {
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderRadius: theme.radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  text: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-});
