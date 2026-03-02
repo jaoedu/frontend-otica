@@ -2,32 +2,66 @@ import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type AuthState = {
-  token: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+
   isAuthenticated: boolean;
   hydrated: boolean;
-  setToken: (t: string | null) => Promise<void>;
+
+  setTokens: (access: string | null, refresh?: string | null) => Promise<void>;
   hydrate: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
+const ACCESS_KEY = "accessToken";
+const REFRESH_KEY = "refreshToken";
+
 export const useAuthStore = create<AuthState>((set) => ({
-  token: null,
+  accessToken: null,
+  refreshToken: null,
+
   isAuthenticated: false,
   hydrated: false,
 
-  setToken: async (t) => {
-    if (t) await AsyncStorage.setItem("token", t);
-    else await AsyncStorage.removeItem("token");
-    set({ token: t, isAuthenticated: !!t });
+  setTokens: async (access, refresh) => {
+    // access
+    if (access) await AsyncStorage.setItem(ACCESS_KEY, access);
+    else await AsyncStorage.removeItem(ACCESS_KEY);
+
+    // refresh (só atualiza se veio)
+    if (typeof refresh !== "undefined") {
+      if (refresh) await AsyncStorage.setItem(REFRESH_KEY, refresh);
+      else await AsyncStorage.removeItem(REFRESH_KEY);
+    }
+
+    set((s) => ({
+      accessToken: access,
+      refreshToken: typeof refresh !== "undefined" ? refresh : s.refreshToken,
+      isAuthenticated: !!access,
+    }));
   },
 
   hydrate: async () => {
-    const t = await AsyncStorage.getItem("token");
-    set({ token: t, isAuthenticated: !!t, hydrated: true });
+    const access = await AsyncStorage.getItem(ACCESS_KEY);
+    const refresh = await AsyncStorage.getItem(REFRESH_KEY);
+
+    set({
+      accessToken: access,
+      refreshToken: refresh,
+      isAuthenticated: !!access,
+      hydrated: true,
+    });
   },
 
   logout: async () => {
-    await AsyncStorage.removeItem("token");
-    set({ token: null, isAuthenticated: false });
+    await AsyncStorage.removeItem(ACCESS_KEY);
+    await AsyncStorage.removeItem(REFRESH_KEY);
+
+    set({
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      hydrated: true,
+    });
   },
 }));

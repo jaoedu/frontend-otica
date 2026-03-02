@@ -1,4 +1,4 @@
-import { api } from "./client";
+import { api } from "@/api/client";
 
 export type CheckoutItem = { product_id: number; quantity: number };
 
@@ -23,10 +23,5 @@ export async function checkout(items: CheckoutItem[]) {
 
 export async function listOrders() {
   const res = await api.get<Order[]>("/orders/orders/");
-  return res.data;
-}
-
-export async function getOrder(id: number) {
-  const res = await api.get<Order>(`/orders/orders/${id}/`);
   return res.data;
 }

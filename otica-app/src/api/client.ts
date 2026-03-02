@@ -60,7 +60,7 @@ api.interceptors.response.use(
       );
 
       const newAccess = (r.data as any).access as string;
-      await setTokens(newAccess);
+      await setTokens(newAccess); // refresh continua o mesmo
 
       resolveQueue(newAccess);
       original.headers.Authorization = `Bearer ${newAccess}`;
