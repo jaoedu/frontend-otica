@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AuthStack from "@/navigation/AuthStack";
 import AppTabs from "@/navigation/AppTabs";
@@ -12,6 +13,14 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const hydrated = useAuthStore((s) => s.hydrated);
+  const hydrate = useAuthStore((s) => s.hydrate);
+
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
+  if (!hydrated) return null;
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

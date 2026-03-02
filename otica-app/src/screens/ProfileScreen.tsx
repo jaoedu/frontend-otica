@@ -1,15 +1,18 @@
-import { View, Text } from "react-native";
-import { theme } from "@/utils/theme";
+import { Text, View } from "react-native";
+import AppButton from "@/components/AppButton";
+import { useAuthStore } from "@/store/authStore";
 
 export default function ProfileScreen() {
+  const logout = useAuthStore((s) => s.logout);
+
   return (
-    <View style={{ flex: 1, padding: theme.spacing.md }}>
-      <Text style={{ fontSize: 22, fontWeight: "800", color: theme.colors.text }}>
-        Perfil
-      </Text>
-      <Text style={{ color: theme.colors.muted, marginTop: 8 }}>
-        Dados do cliente + endereços + sair.
-      </Text>
+    <View style={{ flex: 1, padding: 12, gap: 12 }}>
+      <View style={{ backgroundColor: "white", borderRadius: 14, padding: 12, gap: 6 }}>
+        <Text style={{ fontSize: 18, fontWeight: "900" }}>Perfil</Text>
+        <Text style={{ opacity: 0.7 }}>Dados do cliente + endereços (próxima etapa)</Text>
+      </View>
+
+      <AppButton title="Sair" variant="danger" onPress={logout} />
     </View>
   );
 }
