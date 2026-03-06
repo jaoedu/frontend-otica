@@ -29,9 +29,10 @@ export default function RegisterScreen() {
   });
 
   async function onSubmit(data: RegisterForm) {
-    await register(data.name, data.email, data.password);
-    navigation.goBack();
-  }
+  await register(data.email, data.password);
+  // se você auto-loginou, pode navegar pra Home
+  // navigation.replace("Home") ou deixa seu fluxo decidir
+}
 
   const inputStyle = (hasError?: boolean) => ({
     borderWidth: 1,
