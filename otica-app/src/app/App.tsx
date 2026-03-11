@@ -6,13 +6,13 @@ import { View, ActivityIndicator } from "react-native";
 
 export default function App() {
   const hydrate = useAuthStore((s) => s.hydrate);
-  const isHydrating = useAuthStore((s) => s.isHydrating);
+  const hydrated = useAuthStore((s) => s.hydrated);
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
 
-  if (isHydrating) {
+  if (!hydrated) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator />
