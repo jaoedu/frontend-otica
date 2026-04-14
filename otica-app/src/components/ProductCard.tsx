@@ -2,16 +2,15 @@ import { Image, Pressable, Text, View } from "react-native";
 import { PriceTag } from "./PriceTag";
 import type { Product } from "@/api/products";
 
-export function ProductCard({
-  product,
-  onPress,
-}: {
+type Props = {
   product: Product;
   onPress: () => void;
-}) {
+  onAddToCart: () => void;
+};
+
+export function ProductCard({ product, onPress, onAddToCart }: Props) {
   return (
-    <Pressable
-      onPress={onPress}
+    <View
       style={{
         flex: 1,
         maxWidth: "48%",
@@ -24,70 +23,96 @@ export function ProductCard({
         borderColor: "#eee",
       }}
     >
-      {/* Imagem do produto */}
-      <View
-        style={{
-          width: "100%",
-          height: 120,
-          borderRadius: 12,
-          backgroundColor: "#f2f2f2",
-          overflow: "hidden",
-          marginBottom: 8,
-        }}
-      >
-        {product.image_url ? (
-          <Image
-            source={{ uri: product.image_url }}
-            style={{
-              width: "100%",
-              height: "100%",
-            }}
-            resizeMode="cover"
-          />
-        ) : null}
-      </View>
+      <Pressable onPress={onPress}>
+        <View
+          style={{
+            width: "100%",
+            height: 120,
+            borderRadius: 12,
+            backgroundColor: "#f2f2f2",
+            overflow: "hidden",
+            marginBottom: 8,
+          }}
+        >
+          {product.image_url ? (
+            <Image
+              source={{ uri: product.image_url }}
+              style={{
+                width: "100%",
+                height: "100%",
+              }}
+              resizeMode="cover"
+            />
+          ) : null}
+        </View>
 
-      {/* Informações */}
-      <View style={{ gap: 4 }}>
+        <View style={{ gap: 4 }}>
+          <Text
+            style={{
+              fontWeight: "800",
+              fontSize: 14,
+            }}
+            numberOfLines={2}
+          >
+            {product.name}
+          </Text>
+
+          {product.brand ? (
+            <Text
+              style={{
+                opacity: 0.7,
+                fontSize: 12,
+              }}
+            >
+              {product.brand}
+            </Text>
+          ) : null}
+
+          <PriceTag
+            price={product.price}
+            finalPrice={product.final_price}
+            isOnSale={product.is_on_sale}
+          />
+
+          {product.is_on_sale ? (
+            <Text
+              style={{
+                color: "#16a34a",
+                fontWeight: "700",
+                fontSize: 12,
+              }}
+            >
+              Promoção ativa
+            </Text>
+          ) : null}
+        </View>
+      </Pressable>
+
+      <Pressable
+        onPress={onAddToCart}
+        accessibilityRole="button"
+        accessibilityLabel={`Adicionar ${product.name} ao carrinho`}
+        accessibilityHint="Adiciona uma unidade do produto ao carrinho"
+        style={({ pressed }) => ({
+          marginTop: 10,
+          minHeight: 40,
+          borderRadius: 10,
+          backgroundColor: "#111827",
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: pressed ? 0.9 : 1,
+        })}
+      >
         <Text
           style={{
+            color: "#fff",
             fontWeight: "800",
-            fontSize: 14,
+            fontSize: 13,
           }}
-          numberOfLines={2}
         >
-          {product.name}
+          Adicionar
         </Text>
-
-        {product.brand ? (
-          <Text
-            style={{
-              opacity: 0.7,
-              fontSize: 12,
-            }}
-          >
-            {product.brand}
-          </Text>
-        ) : null}
-
-        <PriceTag
-          price={product.price}
-          finalPrice={product.final_price}
-          isOnSale={product.is_on_sale}
-        />
-
-        {product.is_on_sale ? (
-          <Text
-            style={{
-              color: "#16a34a",
-              fontWeight: "700",
-              fontSize: 12,
-            }}
-          >
-            Promoção ativa
-          </Text>
-        ) : null}
-      </View>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }

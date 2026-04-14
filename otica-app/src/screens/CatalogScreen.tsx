@@ -15,11 +15,13 @@ import { ProductCard } from "@/components/ProductCard";
 import { EmptyState } from "@/components/EmptyState";
 import { theme } from "@/utils/theme";
 import type { CatalogStackParamList } from "@/navigation/CatalogStack";
+import { useCartStore } from "@/store/cartStore";
 
 type Nav = NativeStackNavigationProp<CatalogStackParamList, "Catalog">;
 
 export default function CatalogScreen() {
   const navigation = useNavigation<Nav>();
+  const addToCart = useCartStore((s) => s.add);
 
   const [data, setData] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -212,6 +214,7 @@ export default function CatalogScreen() {
             <ProductCard
               product={item}
               onPress={() => navigation.navigate("ProductDetails", { id: item.id })}
+              onAddToCart={() => addToCart(item, 1)}
             />
           )}
         />
