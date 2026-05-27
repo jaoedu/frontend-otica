@@ -1,19 +1,22 @@
-import { useEffect, useState } from "react";
-import { View, Text, Pressable, Image, StyleSheet, ScrollView } from "react-native";
+import { useEffect } from "react";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { usePrescriptionStore } from "@/store/prescriptionStore";
 import { theme } from "@/utils/theme";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { CatalogStackParamList } from "@/navigation/CatalogStack";
 
-type Props = NativeStackScreenProps<CatalogStackParamList, "PrescriptionUpload">;
+type Props = {
+  navigation: any;
+  route: { params?: { photoUri?: string } };
+};
 
 export default function PrescriptionUploadScreen({ navigation, route }: Props) {
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const photoUri = usePrescriptionStore((s) => s.photoUri);
+  const setPhotoUri = usePrescriptionStore((s) => s.setPhotoUri);
 
   useEffect(() => {
     if (route.params?.photoUri) {
       setPhotoUri(route.params.photoUri);
     }
-  }, [route.params?.photoUri]);
+  }, [route.params?.photoUri, setPhotoUri]);
 
   function handleOpenCamera() {
     navigation.navigate("PrescriptionCamera");
@@ -24,7 +27,7 @@ export default function PrescriptionUploadScreen({ navigation, route }: Props) {
   }
 
   function handleConfirm() {
-    console.log("Receita confirmada:", photoUri);
+    navigation.goBack();
   }
 
   return (
@@ -36,14 +39,14 @@ export default function PrescriptionUploadScreen({ navigation, route }: Props) {
       <Text style={styles.title}>Anexar receita</Text>
 
       <Text style={styles.subtitle}>
-        Fotografe sua receita médica e anexe ao aplicativo para facilitar o atendimento.
+        Fotografe sua receita medica e anexe ao pedido para facilitar o atendimento.
       </Text>
 
       <View style={styles.infoBox}>
         <Text style={styles.infoTitle}>Dicas para uma boa foto</Text>
-        <Text style={styles.infoText}>• Deixe a receita bem iluminada</Text>
-        <Text style={styles.infoText}>• Evite sombras e cortes nas bordas</Text>
-        <Text style={styles.infoText}>• Mantenha o texto legível</Text>
+        <Text style={styles.infoText}>- Deixe a receita bem iluminada</Text>
+        <Text style={styles.infoText}>- Evite sombras e cortes nas bordas</Text>
+        <Text style={styles.infoText}>- Mantenha o texto legivel</Text>
       </View>
 
       <View style={styles.card}>
@@ -58,10 +61,9 @@ export default function PrescriptionUploadScreen({ navigation, route }: Props) {
           </>
         ) : (
           <View style={styles.placeholder}>
-            <Text style={styles.placeholderIcon}>📄</Text>
             <Text style={styles.placeholderTitle}>Nenhuma receita anexada</Text>
             <Text style={styles.placeholderText}>
-              Toque no botão abaixo para fotografar sua receita.
+              Toque no botao abaixo para fotografar sua receita.
             </Text>
           </View>
         )}
@@ -110,7 +112,20 @@ export default function PrescriptionUploadScreen({ navigation, route }: Props) {
             <Text style={styles.confirmButtonText}>Confirmar receita</Text>
           </Pressable>
         </>
-      ) : null}
+      ) : (
+        <Pressable
+          style={({ pressed }) => [
+            styles.secondaryButton,
+            pressed && styles.secondaryButtonPressed,
+          ]}
+          onPress={handleConfirm}
+          accessibilityRole="button"
+          accessibilityLabel="Continuar sem receita"
+          hitSlop={theme.a11y.hitSlop}
+        >
+          <Text style={styles.secondaryButtonText}>Continuar sem receita</Text>
+        </Pressable>
+      )}
     </ScrollView>
   );
 }
@@ -191,10 +206,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: theme.spacing.md,
-  },
-  placeholderIcon: {
-    fontSize: 44,
-    marginBottom: theme.spacing.sm,
   },
   placeholderTitle: {
     ...theme.typography.h3,

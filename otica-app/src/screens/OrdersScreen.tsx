@@ -298,6 +298,24 @@ export default function OrdersScreen() {
                       {item.items?.length ?? 0}
                     </Text>
                   </View>
+
+                  {item.address ? (
+                    <Text
+                      allowFontScaling
+                      style={{ color: theme.colors.muted, fontWeight: "700" }}
+                    >
+                      Entrega: {item.address.label} - {item.address.city}/{item.address.state}
+                    </Text>
+                  ) : null}
+
+                  {item.prescription_image_url ? (
+                    <Text
+                      allowFontScaling
+                      style={{ color: theme.colors.muted, fontWeight: "700" }}
+                    >
+                      Receita anexada
+                    </Text>
+                  ) : null}
                 </View>
               </View>
             );

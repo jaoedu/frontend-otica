@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Image, StyleSheet } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { theme } from "@/utils/theme";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { CatalogStackParamList } from "@/navigation/CatalogStack";
 
-type Props = NativeStackScreenProps<CatalogStackParamList, "PrescriptionCamera">;
+type Props = {
+  navigation: any;
+};
 
 export default function PrescriptionCameraScreen({ navigation }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -66,8 +66,8 @@ export default function PrescriptionCameraScreen({ navigation }: Props) {
 
   function handleUsePhoto() {
     navigation.navigate("PrescriptionUpload", {
-  photoUri: photoUri ?? undefined,
-});
+      photoUri: photoUri ?? undefined,
+    });
   }
 
   return (

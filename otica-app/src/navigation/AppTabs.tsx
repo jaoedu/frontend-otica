@@ -3,9 +3,9 @@ import type { NavigatorScreenParams } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
 import HomeScreen from "@/screens/HomeScreen";
-import CartScreen from "@/screens/CartScreen";
 import OrdersScreen from "@/screens/OrdersScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
+import CartStack, { type CartStackParamList } from "@/navigation/CartStack";
 import CatalogStack, { type CatalogStackParamList } from "@/navigation/CatalogStack";
 import { theme } from "@/utils/theme";
 import { useCartStore } from "@/store/cartStore";
@@ -13,7 +13,7 @@ import { useCartStore } from "@/store/cartStore";
 export type AppTabParamList = {
   Home: undefined;
   CatalogTab: NavigatorScreenParams<CatalogStackParamList>;
-  Cart: undefined;
+  Cart: NavigatorScreenParams<CartStackParamList> | undefined;
   Orders: undefined;
   Profile: undefined;
 };
@@ -75,7 +75,7 @@ export default function AppTabs() {
 
       <Tab.Screen
         name="Cart"
-        component={CartScreen}
+        component={CartStack}
         options={{
           title: "Carrinho",
           tabBarBadge: cartCount > 0 ? cartCount : undefined,

@@ -1,6 +1,17 @@
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { loginApi, registerApi, meApi, type Me } from "@/api/auth";
+import {
+  createAddressApi,
+  deleteAddressApi,
+  loginApi,
+  meApi,
+  registerApi,
+  updateAddressApi,
+  updateMeApi,
+  type Address,
+  type AddressPayload,
+  type Me,
+} from "@/api/auth";
 
 type AuthState = {
   accessToken: string | null;
@@ -13,7 +24,13 @@ type AuthState = {
   authError: string | null;
 
   setTokens: (access: string | null, refresh?: string | null) => Promise<void>;
+  setUser: (user: Me | null) => Promise<void>;
   hydrate: () => Promise<void>;
+  refreshMe: () => Promise<Me | null>;
+  updateProfile: (payload: Pick<Me, "name" | "phone">) => Promise<void>;
+  createAddress: (payload: AddressPayload) => Promise<Address>;
+  updateAddress: (id: number, payload: Partial<AddressPayload>) => Promise<Address>;
+  deleteAddress: (id: number) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -23,6 +40,22 @@ type AuthState = {
 const ACCESS_KEY = "accessToken";
 const REFRESH_KEY = "refreshToken";
 const USER_KEY = "authUser";
+
+function normalizeApiError(error: any, fallback: string) {
+  const data = error?.response?.data;
+
+  if (typeof data?.detail === "string") return data.detail;
+  if (typeof data?.message === "string") return data.message;
+
+  if (data && typeof data === "object") {
+    const firstKey = Object.keys(data)[0];
+    const value = data[firstKey];
+    if (Array.isArray(value) && typeof value[0] === "string") return value[0];
+    if (typeof value === "string") return value;
+  }
+
+  return fallback;
+}
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: null,
@@ -52,18 +85,65 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }));
   },
 
+  setUser: async (user) => {
+    if (user) await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+    else await AsyncStorage.removeItem(USER_KEY);
+    set({ user });
+  },
+
   hydrate: async () => {
     const access = await AsyncStorage.getItem(ACCESS_KEY);
     const refresh = await AsyncStorage.getItem(REFRESH_KEY);
     const userStr = await AsyncStorage.getItem(USER_KEY);
 
+    let user: Me | null = null;
+    if (userStr) {
+      try {
+        user = JSON.parse(userStr);
+      } catch {
+        await AsyncStorage.removeItem(USER_KEY);
+      }
+    }
+
     set({
       accessToken: access,
       refreshToken: refresh,
-      user: userStr ? JSON.parse(userStr) : null,
+      user,
       isAuthenticated: !!access,
       hydrated: true,
     });
+  },
+
+  refreshMe: async () => {
+    try {
+      const user = await meApi();
+      await get().setUser(user);
+      return user;
+    } catch {
+      return null;
+    }
+  },
+
+  updateProfile: async (payload) => {
+    const user = await updateMeApi(payload);
+    await get().setUser(user);
+  },
+
+  createAddress: async (payload) => {
+    const created = await createAddressApi(payload);
+    await get().refreshMe();
+    return created;
+  },
+
+  updateAddress: async (id, payload) => {
+    const updated = await updateAddressApi(id, payload);
+    await get().refreshMe();
+    return updated;
+  },
+
+  deleteAddress: async (id) => {
+    await deleteAddressApi(id);
+    await get().refreshMe();
   },
 
   login: async (email, password) => {
@@ -71,16 +151,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const tokens = await loginApi(email, password);
-
       await get().setTokens(tokens.access, tokens.refresh);
-
-      try {
-        const user = await meApi();
-        await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
-        set({ user });
-      } catch {
-        set({ user: null });
-      }
+      await get().refreshMe();
 
       set({
         isAuthenticated: true,
@@ -88,14 +160,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         authError: null,
       });
     } catch (error: any) {
-      const message =
-        error?.response?.data?.detail ||
-        error?.response?.data?.message ||
-        "Não foi possível entrar. Verifique suas credenciais.";
-
       set({
         isAuthLoading: false,
-        authError: message,
+        authError: normalizeApiError(
+          error,
+          "Nao foi possivel entrar. Verifique suas credenciais."
+        ),
         isAuthenticated: false,
       });
     }
@@ -106,22 +176,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       await registerApi(name, email, password);
-
       set({
         isAuthLoading: false,
         authError: null,
       });
     } catch (error: any) {
-      const message =
-        error?.response?.data?.detail ||
-        error?.response?.data?.message ||
-        "Não foi possível criar a conta.";
-
       set({
         isAuthLoading: false,
-        authError: message,
+        authError: normalizeApiError(error, "Nao foi possivel criar a conta."),
       });
-
       throw error;
     }
   },

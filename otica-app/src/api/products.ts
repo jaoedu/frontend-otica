@@ -4,7 +4,7 @@ export type Product = {
   id: number;
   name: string;
   brand: string;
-  description: string;
+  description?: string;
   price: string;       // vem como string do DRF geralmente
   sale_price: string;  // idem
   final_price: string;
@@ -14,8 +14,9 @@ export type Product = {
 };
 
 export type ProductDetail = Product & {
+  description: string;
   gallery: { id: number; image_url: string }[];
-  attributes: { id: number; name: string; value: string }[];
+  attributes: { name: string; value: string }[];
 };
 
 export async function listProducts() {

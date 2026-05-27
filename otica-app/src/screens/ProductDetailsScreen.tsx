@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  Alert,
   ScrollView,
   View,
   Text,
@@ -12,6 +13,7 @@ import { theme } from "@/utils/theme";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { CatalogStackParamList } from "@/navigation/CatalogStack";
 import { getProduct, type ProductDetail } from "@/api/products";
+import { useCartStore } from "@/store/cartStore";
 
 type Props = NativeStackScreenProps<
   CatalogStackParamList,
@@ -20,6 +22,7 @@ type Props = NativeStackScreenProps<
 
 export default function ProductDetailsScreen({ navigation, route }: Props) {
   const { id } = route.params;
+  const addToCart = useCartStore((s) => s.add);
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -153,7 +156,7 @@ export default function ProductDetailsScreen({ navigation, route }: Props) {
           <Text style={styles.sectionTitle}>Especificações</Text>
 
           {product.attributes.map((attr) => (
-            <View key={attr.id} style={styles.attributeRow}>
+            <View key={`${attr.name}-${attr.value}`} style={styles.attributeRow}>
               <Text style={styles.attributeName}>{attr.name}</Text>
               <Text style={styles.attributeValue}>{attr.value}</Text>
             </View>
@@ -184,7 +187,14 @@ export default function ProductDetailsScreen({ navigation, route }: Props) {
         </Pressable>
       </View>
 
-      <Pressable style={styles.buyButton} accessibilityRole="button">
+      <Pressable
+        style={styles.buyButton}
+        accessibilityRole="button"
+        onPress={() => {
+          addToCart(product, 1);
+          Alert.alert("Produto adicionado", "Item adicionado ao carrinho.");
+        }}
+      >
         <Text style={styles.buyButtonText}>Adicionar ao carrinho</Text>
       </Pressable>
     </ScrollView>

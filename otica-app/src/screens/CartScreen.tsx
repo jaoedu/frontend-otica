@@ -1,31 +1,24 @@
-import { useState } from "react";
-import {
-  Alert,
-  FlatList,
-  Text,
-  View,
-  Image,
-} from "react-native";
+import { FlatList, Image, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppButton from "@/components/AppButton";
 import { EmptyState } from "@/components/EmptyState";
 import { useCartStore } from "@/store/cartStore";
-import { checkout } from "@/api/orders";
 import { theme } from "@/utils/theme";
+import type { CartStackParamList } from "@/navigation/CartStack";
+
+type Props = NativeStackScreenProps<CartStackParamList, "CartHome">;
 
 function formatBRL(value: number) {
   return `R$ ${value.toFixed(2).replace(".", ",")}`;
 }
 
-export default function CartScreen() {
+export default function CartScreen({ navigation }: Props) {
   const items = useCartStore((s) => s.items);
   const inc = useCartStore((s) => s.inc);
   const dec = useCartStore((s) => s.dec);
   const remove = useCartStore((s) => s.remove);
-  const clear = useCartStore((s) => s.clear);
   const total = useCartStore((s) => s.total);
-
-  const [loading, setLoading] = useState(false);
 
   if (!items.length) {
     return (
@@ -36,29 +29,6 @@ export default function CartScreen() {
         />
       </SafeAreaView>
     );
-  }
-
-  async function handleCheckout() {
-    try {
-      setLoading(true);
-
-      const payload = items.map((i) => ({
-        product_id: i.product.id,
-        quantity: i.quantity,
-      }));
-
-      const order = await checkout(payload);
-
-      clear();
-      Alert.alert("Pedido criado!", `Pedido #${order.id} criado com sucesso.`);
-    } catch {
-      Alert.alert(
-        "Erro no checkout",
-        "Verifique estoque ou servidor e tente novamente."
-      );
-    } finally {
-      setLoading(false);
-    }
   }
 
   return (
@@ -84,7 +54,7 @@ export default function CartScreen() {
               marginTop: 4,
             }}
           >
-            Revise os itens antes de finalizar a compra.
+            Revise os itens antes de ir para o checkout.
           </Text>
         </View>
 
@@ -177,7 +147,7 @@ export default function CartScreen() {
                         fontWeight: "700",
                       }}
                     >
-                      Unitário: {formatBRL(unitPrice)}
+                      Unitario: {formatBRL(unitPrice)}
                     </Text>
 
                     <Text
@@ -326,12 +296,10 @@ export default function CartScreen() {
             </View>
 
             <AppButton
-              title="Finalizar compra"
-              onPress={handleCheckout}
-              loading={loading}
-              disabled={loading}
-              accessibilityLabel="Finalizar compra"
-              accessibilityHint="Envia os itens do carrinho para criar o pedido"
+              title="Ir para checkout"
+              onPress={() => navigation.navigate("Checkout")}
+              accessibilityLabel="Ir para checkout"
+              accessibilityHint="Abre a tela para escolher endereco e receita"
             />
           </View>
         </View>
