@@ -29,8 +29,7 @@ export default function RegisterScreen() {
   });
 
   async function onSubmit(data: RegisterForm) {
-    await register(data.name, data.email, data.password);
-    navigation.goBack();
+    await register(data.name ?? "", data.email, data.password);
   }
 
   const cardStyle = {

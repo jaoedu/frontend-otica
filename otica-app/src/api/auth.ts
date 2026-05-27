@@ -51,11 +51,6 @@ export async function registerApi(name: string, email: string, password: string)
   return data;
 }
 
-export async function listAddressesApi() {
-  const { data } = await api.get<Address[]>("/auth/addresses/");
-  return data;
-}
-
 export async function createAddressApi(payload: AddressPayload) {
   const { data } = await api.post<Address>("/auth/addresses/", payload);
   return data;
