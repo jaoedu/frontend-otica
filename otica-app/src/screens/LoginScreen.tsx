@@ -1,4 +1,4 @@
-import { View, Text, TextInput, Pressable,} from "react-native";
+import { View, Text, TextInput, Pressable } from "react-native";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/store/authStore";
@@ -14,6 +14,10 @@ type Nav = NativeStackNavigationProp<AuthStackParamList, "Login">;
 export default function LoginScreen() {
   const navigation = useNavigation<Nav>();
 
+  const login = useAuthStore((s) => s.login);
+  const isAuthLoading = useAuthStore((s) => s.isAuthLoading);
+  const authError = useAuthStore((s) => s.authError);
+
   const {
     setValue,
     handleSubmit,
@@ -21,23 +25,12 @@ export default function LoginScreen() {
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
-    mode: "onChange", // valida enquanto digita (bom pra UX)
+    mode: "onChange",
   });
 
-  const login = useAuthStore((s) => s.login);
-  const isAuthLoading = useAuthStore((s) => s.isAuthLoading);
-  const authError = useAuthStore((s) => s.authError);
-
-async function onSubmit(data: LoginForm) {
-  await login(data.email, data.password);
+  async function onSubmit(data: LoginForm) {
+    await login(data.email, data.password);
   }
-  
-  {!!authError && (
-  <Text accessibilityRole="alert" style={{ color: theme.colors.danger, textAlign: "center" }}>
-    {authError}
-  </Text>
-)}
-
 
   return (
     <View
@@ -73,6 +66,7 @@ async function onSubmit(data: LoginForm) {
           minHeight: 44,
         }}
       />
+
       {!!errors.email && (
         <Text accessibilityRole="alert" style={{ color: theme.colors.danger }}>
           {errors.email.message}
@@ -98,19 +92,29 @@ async function onSubmit(data: LoginForm) {
           minHeight: 44,
         }}
       />
+
       {!!errors.password && (
         <Text accessibilityRole="alert" style={{ color: theme.colors.danger }}>
           {errors.password.message}
         </Text>
       )}
 
+      {!!authError && (
+        <Text
+          accessibilityRole="alert"
+          style={{ color: theme.colors.danger, textAlign: "center" }}
+        >
+          {authError}
+        </Text>
+      )}
+
       <View style={{ marginTop: 12, gap: 10 }}>
         <AppButton
-  title={isAuthLoading ? "Entrando..." : "Entrar"}
-  onPress={handleSubmit(onSubmit)}
-  disabled={isAuthLoading}
-  loading={isAuthLoading}
-/>
+          title={isAuthLoading ? "Entrando..." : "Entrar"}
+          onPress={handleSubmit(onSubmit)}
+          disabled={isAuthLoading}
+          loading={isAuthLoading}
+        />
 
         <Pressable
           onPress={() => navigation.navigate("Register")}

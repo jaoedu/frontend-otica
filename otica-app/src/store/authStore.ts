@@ -1,145 +1,206 @@
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { loginApi, meApi, registerApi, type Me } from "@/api/auth";
+import {
+  createAddressApi,
+  deleteAddressApi,
+  loginApi,
+  meApi,
+  registerApi,
+  updateAddressApi,
+  updateMeApi,
+  type Address,
+  type AddressPayload,
+  type Me,
+} from "@/api/auth";
 
 type AuthState = {
   accessToken: string | null;
   refreshToken: string | null;
+  user: Me | null;
 
   isAuthenticated: boolean;
   hydrated: boolean;
-
-  me: Me | null;
-
   isAuthLoading: boolean;
   authError: string | null;
 
-  // actions base
   setTokens: (access: string | null, refresh?: string | null) => Promise<void>;
+  setUser: (user: Me | null) => Promise<void>;
   hydrate: () => Promise<void>;
-  logout: () => Promise<void>;
-
-  // actions auth
-  register: (email: string, password: string) => Promise<void>;
+  refreshMe: () => Promise<Me | null>;
+  updateProfile: (payload: Pick<Me, "name" | "phone">) => Promise<void>;
+  createAddress: (payload: AddressPayload) => Promise<Address>;
+  updateAddress: (id: number, payload: Partial<AddressPayload>) => Promise<Address>;
+  deleteAddress: (id: number) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  loadMe: () => Promise<void>;
-  clearError: () => void;
+  register: (name: string, email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  clearAuthError: () => void;
 };
 
 const ACCESS_KEY = "accessToken";
 const REFRESH_KEY = "refreshToken";
+const USER_KEY = "authUser";
 
-function normalizeApiError(err: any): string {
-  // tenta pegar erro do DRF: { detail: "..."} ou { field: ["..."] }
-  const data = err?.response?.data;
+function normalizeApiError(error: any, fallback: string) {
+  const data = error?.response?.data;
 
   if (typeof data?.detail === "string") return data.detail;
+  if (typeof data?.message === "string") return data.message;
 
   if (data && typeof data === "object") {
     const firstKey = Object.keys(data)[0];
-    const val = data[firstKey];
-    if (Array.isArray(val) && typeof val[0] === "string") return val[0];
-    if (typeof val === "string") return val;
+    const value = data[firstKey];
+    if (Array.isArray(value) && typeof value[0] === "string") return value[0];
+    if (typeof value === "string") return value;
   }
 
-  if (typeof err?.message === "string") return err.message;
-  return "Algo deu errado. Tente novamente.";
+  return fallback;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: null,
   refreshToken: null,
+  user: null,
 
   isAuthenticated: false,
   hydrated: false,
-
-  me: null,
-
   isAuthLoading: false,
   authError: null,
 
-  clearError: () => set({ authError: null }),
+  clearAuthError: () => set({ authError: null }),
 
   setTokens: async (access, refresh) => {
-    // access
     if (access) await AsyncStorage.setItem(ACCESS_KEY, access);
     else await AsyncStorage.removeItem(ACCESS_KEY);
 
-    // refresh (só atualiza se veio)
     if (typeof refresh !== "undefined") {
       if (refresh) await AsyncStorage.setItem(REFRESH_KEY, refresh);
       else await AsyncStorage.removeItem(REFRESH_KEY);
     }
 
-    set((s) => ({
+    set((state) => ({
       accessToken: access,
-      refreshToken: typeof refresh !== "undefined" ? refresh : s.refreshToken,
+      refreshToken: typeof refresh !== "undefined" ? refresh : state.refreshToken,
       isAuthenticated: !!access,
     }));
+  },
+
+  setUser: async (user) => {
+    if (user) await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+    else await AsyncStorage.removeItem(USER_KEY);
+    set({ user });
   },
 
   hydrate: async () => {
     const access = await AsyncStorage.getItem(ACCESS_KEY);
     const refresh = await AsyncStorage.getItem(REFRESH_KEY);
+    const userStr = await AsyncStorage.getItem(USER_KEY);
+
+    let user: Me | null = null;
+    if (userStr) {
+      try {
+        user = JSON.parse(userStr);
+      } catch {
+        await AsyncStorage.removeItem(USER_KEY);
+      }
+    }
 
     set({
       accessToken: access,
       refreshToken: refresh,
+      user,
       isAuthenticated: !!access,
       hydrated: true,
     });
   },
 
-  logout: async () => {
-    await AsyncStorage.removeItem(ACCESS_KEY);
-    await AsyncStorage.removeItem(REFRESH_KEY);
-
-    set({
-      accessToken: null,
-      refreshToken: null,
-      isAuthenticated: false,
-      hydrated: true,
-      me: null,
-      authError: null,
-    });
+  refreshMe: async () => {
+    try {
+      const user = await meApi();
+      await get().setUser(user);
+      return user;
+    } catch {
+      return null;
+    }
   },
 
-  register: async (email, password) => {
-    set({ isAuthLoading: true, authError: null });
-    try {
-      await registerApi(email, password);
+  updateProfile: async (payload) => {
+    const user = await updateMeApi(payload);
+    await get().setUser(user);
+  },
 
-      // opção A: só cadastra e volta pra login
-      set({ isAuthLoading: false });
-    } catch (err: any) {
-      set({ isAuthLoading: false, authError: normalizeApiError(err) });
-      throw err;
-    }
+  createAddress: async (payload) => {
+    const created = await createAddressApi(payload);
+    await get().refreshMe();
+    return created;
+  },
+
+  updateAddress: async (id, payload) => {
+    const updated = await updateAddressApi(id, payload);
+    await get().refreshMe();
+    return updated;
+  },
+
+  deleteAddress: async (id) => {
+    await deleteAddressApi(id);
+    await get().refreshMe();
   },
 
   login: async (email, password) => {
     set({ isAuthLoading: true, authError: null });
+
     try {
       const tokens = await loginApi(email, password);
       await get().setTokens(tokens.access, tokens.refresh);
+      await get().refreshMe();
 
-      // tenta carregar o /me depois do login
-      try {
-        await get().loadMe();
-      } catch {
-        // não mata o login se /me falhar
-      }
-
-      set({ isAuthLoading: false });
-    } catch (err: any) {
-      set({ isAuthLoading: false, authError: normalizeApiError(err) });
-      throw err;
+      set({
+        isAuthenticated: true,
+        isAuthLoading: false,
+        authError: null,
+      });
+    } catch (error: any) {
+      set({
+        isAuthLoading: false,
+        authError: normalizeApiError(
+          error,
+          "Nao foi possivel entrar. Verifique suas credenciais."
+        ),
+        isAuthenticated: false,
+      });
     }
   },
 
-  loadMe: async () => {
-    set({ authError: null });
-    const me = await meApi();
-    set({ me });
+  register: async (name, email, password) => {
+    set({ isAuthLoading: true, authError: null });
+
+    try {
+      await registerApi(name, email, password);
+      set({
+        isAuthLoading: false,
+        authError: null,
+      });
+    } catch (error: any) {
+      set({
+        isAuthLoading: false,
+        authError: normalizeApiError(error, "Nao foi possivel criar a conta."),
+      });
+      throw error;
+    }
+  },
+
+  logout: async () => {
+    await AsyncStorage.removeItem(ACCESS_KEY);
+    await AsyncStorage.removeItem(REFRESH_KEY);
+    await AsyncStorage.removeItem(USER_KEY);
+
+    set({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      isAuthenticated: false,
+      hydrated: true,
+      authError: null,
+    });
   },
 }));
